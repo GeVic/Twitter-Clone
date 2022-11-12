@@ -1,5 +1,6 @@
 const express = require('express');
 const loginRoute = require('./routes/loginRoutes');
+const registerRoute = require('./routes/registerRoutes');
 const middlewares = require('./middlewares');
 const path = require('path');
 
@@ -15,6 +16,7 @@ app.use(express.static(path.join(__dirname, 'public')));
 
 // Routes
 app.use('/login', loginRoute);
+app.use('/register', registerRoute);
 
 app.get("/", middlewares.requireLogin, (req, res, next)=> {
     res.status(200).render("home");
