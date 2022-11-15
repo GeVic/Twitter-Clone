@@ -2,6 +2,7 @@ const express = require('express');
 const loginRoute = require('./routes/loginRoutes');
 const registerRoute = require('./routes/registerRoutes');
 const logoutRoute = require('./routes/logoutRoutes');
+const postApiRoute = require('./routes/api/posts');
 const middlewares = require('./middlewares');
 const path = require('path');
 const bodyParser = require('body-parser');
@@ -31,6 +32,9 @@ app.use(
 app.use('/login', loginRoute);
 app.use('/register', registerRoute);
 app.use('/logout', logoutRoute);
+
+// api routes
+app.use('/api/posts', postApiRoute);
 
 app.get('/', middlewares.requireLogin, (req, res, next) => {
 	var payload = {
