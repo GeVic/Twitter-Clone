@@ -38,13 +38,31 @@ $(document).on('click', '.likeButton', (event) => {
 		url: `/api/posts/${postId}/like`,
 		type: 'PUT',
 		success: (postData) => {
-            button.find("span").text(postData.likes.length || "");
-			if(postData.likes.includes(userLoggedIn._id)) {
-                button.addClass("active");
-            }
-            else {
-                button.removeClass("active");
-            }
+			button.find('span').text(postData.likes.length || '');
+			if (postData.likes.includes(userLoggedIn._id)) {
+				button.addClass('active');
+			} else {
+				button.removeClass('active');
+			}
+		},
+	});
+});
+
+$(document).on('click', '.retweetButton', (event) => {
+	var button = $(event.target);
+	var postId = getPostIdFromElement(button);
+	if (postId === undefined) return;
+	$.ajax({
+		url: `/api/posts/${postId}/retweet`,
+		type: 'POST',
+		success: (postData) => {
+			console.log(postData)
+			button.find('span').text(postData.retweetUsers.length || '');
+			if (postData.retweetUsers.includes(userLoggedIn._id)) {
+				button.addClass('active');
+			} else {
+				button.removeClass('active');
+			}
 		},
 	});
 });
@@ -60,6 +78,14 @@ function getPostIdFromElement(element) {
 }
 
 function createPostHtml(postData) {
+	if (postData == null) return alert('post object is null');
+	// check if it's a retweet
+	var isRetweet = postData.retweetData !== undefined;
+	var retweetedBy = isRetweet ? postData.postedBy.username : null;
+	postData = isRetweet ? postData.retweetData : postData;
+
+	console.log(isRetweet);
+
 	var postedBy = postData.postedBy;
 	var displayName = postedBy.firstName + ' ' + postedBy.lastName;
 	var timestamp = postData.createdAt;
@@ -68,18 +94,33 @@ function createPostHtml(postData) {
 	if (postedBy._id === undefined) {
 		return console.log('User object not populated');
 	}
-	var likeButtonActiveClass = postData.likes.includes(userLoggedIn._id) ? "active" : "";
-	return `<div class='post' data-id='${postData._id}'>
+	var likeButtonActiveClass = postData.likes.includes(userLoggedIn._id)
+		? 'active'
+		: '';
+	var retweetButtonActiveClass = postData.retweetUsers.includes(
+		userLoggedIn._id
+	)
+		? 'active'
+		: '';
 
+	var retweetText = '';
+	if (isRetweet) {
+		retweetText = `<span>
+                        <i class='fas fa-retweet'></i>
+                        Retweeted by <a href='/profile/${retweetedBy}'>@${retweetedBy}</a>    
+                    </span>`;
+	}
+	return `<div class='post' data-id='${postData._id}'>
+				<div class='postActionContainer'>
+                    ${retweetText}
+                </div>
                 <div class='mainContentContainer'>
                     <div class='userImageContainer'>
                         <img src='${postedBy.profilePic}'>
                     </div>
                     <div class='postContentContainer'>
                         <div class='header'>
-                            <a href='/profile/${
-															postedBy.username
-														}' class='displayName'>${displayName}</a>
+                            <a href='/profile/${postedBy.username}' class='displayName'>${displayName}</a>
                             <span class='username'>@${postedBy.username}</span>
                             <span class='date'>${timestamp}</span>
                         </div>
@@ -93,8 +134,9 @@ function createPostHtml(postData) {
                                 </button>
                             </div>
                             <div class='postButtonContainer green'>
-                                <button class='retweet'>
+                                <button class='retweetButton ${retweetButtonActiveClass}'>
                                     <i class='fas fa-retweet'></i>
+									<span>${postData.retweetUsers.length || ''}</span>
                                 </button>
                             </div>
                             <div class='postButtonContainer red'>
