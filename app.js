@@ -2,6 +2,7 @@ const express = require('express');
 const loginRoute = require('./routes/loginRoutes');
 const registerRoute = require('./routes/registerRoutes');
 const logoutRoute = require('./routes/logoutRoutes');
+const postRoute = require('./routes/postRoutes');
 const postApiRoute = require('./routes/api/posts');
 const middlewares = require('./middlewares');
 const path = require('path');
@@ -32,6 +33,7 @@ app.use(
 app.use('/login', loginRoute);
 app.use('/register', registerRoute);
 app.use('/logout', logoutRoute);
+app.use("/posts", middlewares.requireLogin, postRoute);
 
 // api routes
 app.use('/api/posts', postApiRoute);
