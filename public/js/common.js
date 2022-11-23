@@ -58,6 +58,30 @@ $('#replyModal').on('hidden.bs.modal', () =>
 	$('#originalPostContainer').html('')
 ); // if the api is slow, we see old content in the modal so clear it
 
+$("#deletePostModal").on("show.bs.modal", (event) => {
+    var button = $(event.relatedTarget);
+    var postId = getPostIdFromElement(button);
+    $("#deletePostButton").data("id", postId);
+})
+
+$("#deletePostButton").click((event) => {
+    var postId = $(event.target).data("id");
+
+    $.ajax({
+        url: `/api/posts/${postId}`,
+        type: "DELETE",
+        success: (data, status, xhr) => {
+
+            if(xhr.status != 202) {
+                alert("could not delete post");
+                return;
+            }
+            
+            location.reload();
+        }
+    })
+})
+
 // dynamic content thus add listener to the page and not the element itself
 $(document).on('click', '.likeButton', (event) => {
 	var button = $(event.target);
@@ -163,6 +187,11 @@ function createPostHtml(postData, largeFont = false) {
                         Replying to <a href='/profile/${replyToUsername}'>@${replyToUsername}<a>
                     </div>`;
 	}
+
+	var buttons = '';
+	if (postData.postedBy._id == userLoggedIn._id) {
+		buttons = `<button data-id="${postData._id}" data-bs-toggle="modal" data-bs-target="#deletePostModal"><i class='fas fa-times'></i></button>`;
+	}
 	return `<div class='post ${largeFontClass}' data-id='${postData._id}'>
                 <div class='postActionContainer'>
                     ${retweetText}
@@ -173,11 +202,10 @@ function createPostHtml(postData, largeFont = false) {
                     </div>
                     <div class='postContentContainer'>
                         <div class='header'>
-                            <a href='/profile/${
-															postedBy.username
-														}' class='displayName'>${displayName}</a>
+                            <a href='/profile/${postedBy.username}' class='displayName'>${displayName}</a>
                             <span class='username'>@${postedBy.username}</span>
                             <span class='date'>${timestamp}</span>
+                            ${buttons}
                         </div>
                         ${replyFlag}
                         <div class='postBody'>
@@ -185,22 +213,20 @@ function createPostHtml(postData, largeFont = false) {
                         </div>
                         <div class='postFooter'>
                             <div class='postButtonContainer'>
-                                <button data-bs-toggle='modal' data-bs-target='#replyModal'>
+                                <button data-toggle='modal' data-target='#replyModal'>
                                     <i class='far fa-comment'></i>
                                 </button>
                             </div>
                             <div class='postButtonContainer green'>
                                 <button class='retweetButton ${retweetButtonActiveClass}'>
                                     <i class='fas fa-retweet'></i>
-                                    <span>${
-																			postData.retweetUsers.length || ''
-																		}</span>
+                                    <span>${postData.retweetUsers.length || ""}</span>
                                 </button>
                             </div>
                             <div class='postButtonContainer red'>
                                 <button class='likeButton ${likeButtonActiveClass}'>
                                     <i class='far fa-heart'></i>
-                                    <span>${postData.likes.length || ''}</span>
+                                    <span>${postData.likes.length || ""}</span>
                                 </button>
                             </div>
                         </div>
@@ -252,18 +278,18 @@ function outputPosts(results, container) {
 }
 
 function outputPostsWithReplies(results, container) {
-    container.html("");
+	container.html('');
 
-    if(results.replyTo !== undefined && results.replyTo._id !== undefined) {
-        var html = createPostHtml(results.replyTo)
-        container.append(html);
-    }
+	if (results.replyTo !== undefined && results.replyTo._id !== undefined) {
+		var html = createPostHtml(results.replyTo);
+		container.append(html);
+	}
 
-    var mainPostHtml = createPostHtml(results.postData, true)
-    container.append(mainPostHtml);
+	var mainPostHtml = createPostHtml(results.postData, true);
+	container.append(mainPostHtml);
 
-    results.replies.forEach(result => {
-        var html = createPostHtml(result)
-        container.append(html);
-    });
+	results.replies.forEach((result) => {
+		var html = createPostHtml(result);
+		container.append(html);
+	});
 }
